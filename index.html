@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#080b19">
+  <title>MIRROR — Gerçek Katlama Oyunu</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;color:#ecf2ff;background:#080b19;color-scheme:dark}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse 65% 65% at 20% 20%,#17294a 0,transparent 74%),radial-gradient(ellipse 60% 60% at 83% 72%,#271b43 0,transparent 76%),#080b19}
+    body{min-height:100dvh;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+    button{font:inherit;touch-action:manipulation} .shell{max-width:990px;margin:auto;padding:clamp(12px,2.4vw,26px);padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));}
+    header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+    .overline{letter-spacing:.22em;text-transform:uppercase;color:#90a4cd;font-size:10px;font-weight:800}
+    h1{font-size:clamp(26px,5.3vw,42px);letter-spacing:.07em;margin:4px 0 0;line-height:1;font-weight:900}
+    h1 b{color:#8dedff;font-weight:900} .sub{font-size:11px;color:#93a3c4;margin-top:6px}
+    .status{display:flex;align-items:center;gap:8px;border:1px solid #324366;background:#111a33;border-radius:999px;padding:9px 12px;min-width:138px;justify-content:center;font-size:12px;font-weight:750;white-space:nowrap}
+    .status .dot{width:8px;height:8px;border-radius:50%;background:#8a9ab4;box-shadow:0 0 10px #8492b0}
+    .status.folded{border-color:#44b79b;background:#0e2a2b;color:#9ff9d6}.status.folded .dot{background:#5bffc5;box-shadow:0 0 12px #5bffc5}
+    .status.continuous{color:#bcd4ff}.status.continuous .dot{background:#6daafc;box-shadow:0 0 12px #6daafc}
+    .status.unsupported{color:#ffb9c5;border-color:#83485b;background:#301622}.status.unsupported .dot{background:#fc728f}
+    .hud{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;margin-bottom:10px}
+    .level{font-size:12px;font-weight:800;color:#d2dafa}.level span{font-size:10px;color:#899bb9;font-weight:500;display:block;margin-top:3px}
+    .stat{font-size:12px;color:#a6b6d2;padding:8px 10px;border:1px solid #25304d;border-radius:11px;background:#11162a}.stat strong{color:white}
+    .gamebox{background:#0d1427;border:1px solid #354364;padding:clamp(7px,1.5vw,16px);border-radius:22px;box-shadow:0 14px 45px #0007, inset 0 1px #ffffff12}
+    .worldLabels{display:grid;grid-template-columns:4fr 1fr 4fr;align-items:center;text-align:center;margin:0 1% 9px;font-size:10px;font-weight:850;letter-spacing:.16em;color:#78d8ff}
+    .worldLabels span:nth-child(2){color:#64749a;letter-spacing:0}.worldLabels span:nth-child(3){color:#deafff}
+    .board{width:100%;aspect-ratio:9 / 5;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));overflow:hidden;position:relative;border-radius:14px;border:1px solid #405078;background:#0a1025;touch-action:none}
+    .tile{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;border:1px solid #ffffff0c}
+    .tile.left{background:linear-gradient(135deg,#122b49,#123449)}.tile.right{background:linear-gradient(135deg,#322243,#251b3e)}
+    .tile.rift{background:repeating-linear-gradient(155deg,#0a0c1a,#0a0c1a 7px,#171329 7px,#171329 14px);border-left:1px solid #74bfff3b;border-right:1px solid #e1a9ff38}
+    .tile.bridge{background:linear-gradient(90deg,#225973,#3ac5b4,#8264cd);box-shadow:inset 0 0 21px #9ffff7a6,0 0 18px #6fdfff88;z-index:1}
+    .tile.bridge:after{content:"";width:55%;height:8%;border-radius:100px;background:#f4fff6;box-shadow:0 0 14px #eafffd;opacity:.75}
+    .tile.wall:before{content:"";width:62%;height:62%;background:repeating-linear-gradient(45deg,#3f4c71,#3f4c71 7px,#4b3e68 7px,#4b3e68 13px);border:1px solid #858bb4;border-radius:9px;box-shadow:inset 0 0 13px #0b0d23}
+    .symbol{position:relative;z-index:2;display:grid;place-items:center;border-radius:50%;font-size:clamp(14px,3.4vw,28px);width:70%;height:70%}
+    .symbol.goal{background:#352343;box-shadow:inset 0 0 0 2px #e1a0ff,0 0 19px #d58cffcc;color:#ffd9ff}
+    .symbol.key{background:#544522;box-shadow:inset 0 0 0 2px #ffe59c,0 0 20px #facc66b0}.symbol.star{background:#344f5c;box-shadow:inset 0 0 0 2px #69e7ff,0 0 20px #78ebffb0}
+    .symbol.player{width:65%;height:65%;background:radial-gradient(circle at 33% 29%,#fff,#a4fbff 33%,#32a6ef 65%,#147abf);box-shadow:0 0 0 5px #71e8ff26,0 0 23px 6px #6ad6ffad;z-index:4;animation:bob 1.2s ease-in-out infinite alternate}
+    .symbol.player:after{content:"";width:32%;height:16%;background:#12466c;border-radius:100px;position:absolute;top:39%;left:34%;box-shadow:-7px 0 0 -2px #12466c,7px 0 0 -2px #12466c}
+    .tile.locked .symbol.goal{opacity:.45;filter:grayscale(.7)}.tile.ready .symbol.goal{animation:pulse 1s ease-in-out infinite alternate}
+    @keyframes bob{to{transform:translateY(-7%)}}@keyframes pulse{to{box-shadow:inset 0 0 0 2px #fff,0 0 31px #e08bff}}
+    .bridgeNote{display:flex;gap:9px;align-items:center;justify-content:center;min-height:36px;padding:7px 8px;border-radius:10px;margin-top:11px;background:#101e34;border:1px solid #273a59;color:#c2d9ff;font-weight:650;text-align:center;font-size:clamp(11px,2.5vw,13px)}
+    .bridgeNote.on{background:#0c302f;border-color:#277c75;color:#a6ffdd}.bridgeNote.warn{background:#321a26;border-color:#9d4867;color:#ffd6dd}
+    .instructions{font-size:13px;line-height:1.52;color:#bdcbe7;margin:12px 2px;min-height:42px}.instructions strong{color:#f3f6ff}
+    .controls{display:grid;grid-template-columns:1fr auto 1fr;gap:15px;align-items:center;margin-top:2px}
+    .small-btn{border-radius:12px;border:1px solid #374b6d;color:#c6d8ff;background:#17223c;padding:12px;font-weight:800;font-size:12px}
+    .dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,48px);gap:5px;place-items:center}
+    .dir{width:52px;height:48px;border:1px solid #5476aa;border-radius:13px;background:linear-gradient(#263d60,#192845);color:#e7f9ff;font-size:25px;font-weight:700;box-shadow:0 3px 0 #0a1429}.dir:active{transform:translateY(2px);box-shadow:0 1px 0 #0a1429;background:#326087}.dir.up{grid-column:2;grid-row:1}.dir.left{grid-column:1;grid-row:2}.dir.down{grid-column:2;grid-row:2}.dir.right{grid-column:3;grid-row:2}
+    .micro{color:#8293b3;font-size:11px;line-height:1.5;text-align:right}.footer{margin:15px auto;text-align:center;color:#8395b6;font-size:11px;line-height:1.55}
+    .overlay{position:fixed;inset:0;background:#050a19cb;display:none;place-items:center;padding:24px;z-index:10;backdrop-filter:blur(9px)}.overlay.open{display:grid}
+    .modal{width:min(100%,410px);border:1px solid #5071a1;border-radius:24px;padding:26px;text-align:center;background:linear-gradient(140deg,#172742,#1a1534);box-shadow:0 30px 100px #000b}.modal .medal{font-size:44px}.modal h2{font-size:29px;margin:8px 0}.modal p{line-height:1.6;color:#c6d5f3}.modal button{width:100%;border:0;border-radius:12px;padding:15px;font-weight:850;color:#061625;background:linear-gradient(90deg,#76dfff,#a1ffda);font-size:15px;margin-top:9px}
+    @media(max-width:520px){.shell{padding:12px}.status{font-size:10px;min-width:116px;padding:8px 9px}.gamebox{padding:7px;border-radius:15px}.controls{grid-template-columns:1fr auto 1fr;gap:6px}.small-btn{font-size:10px;padding:10px 6px}.micro{font-size:9px}.dpad{grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,44px)}.dir{width:45px;height:44px}.stat{font-size:11px}.instructions{font-size:12px}}
+    @media(orientation:landscape) and (max-height:540px){.shell{max-width:1040px;padding:7px 16px}.shell header{margin-bottom:5px}.sub{display:none}.worldLabels{margin-bottom:3px}.gamebox{max-width:730px;margin:auto}.board{aspect-ratio:9 / 4}.instructions{margin:6px 0;min-height:0}.controls{margin:auto;max-width:730px}.dpad{grid-template-rows:repeat(2,37px)}.dir{height:36px}.bridgeNote{margin-top:6px;min-height:27px}.footer{display:none}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div><div class="overline">Fiziksel katlama macerası</div><h1>MIRR<b>O</b>R <span aria-hidden="true">✧</span></h1><div class="sub">İki dünya • Tek hareket • Gerçek menteşe algısı</div></div>
+      <div id="status" class="status unsupported"><span class="dot"></span><span id="statusText">Sensör kontrolü...</span></div>
+    </header>
+    <div class="hud"><div id="levelLabel" class="level">BÖLÜM 1 <span>İlk Geçit</span></div><div class="stat">Adım <strong id="moves">0</strong></div><div class="stat">İlerleme <strong id="progress">1/3</strong></div></div>
+    <section class="gamebox" aria-label="MIRROR oyun tahtası">
+      <div class="worldLabels"><span>◈ MAVİ DÜNYA</span><span>YARIK</span><span>MOR DÜNYA ◈</span></div>
+      <div id="board" class="board" aria-label="Oyuncuyu hedefe götür"></div>
+      <div class="bridgeNote" id="bridgeNote">Telefonunu kısmen katla, ışık köprüsünü aç.</div>
+    </section>
+    <p class="instructions" id="instructions"></p>
+    <div class="controls"><button id="reset" class="small-btn" type="button">↻ Baştan</button>
+      <div class="dpad" role="group" aria-label="Hareket tuşları">
+        <button class="dir up" data-dx="0" data-dy="-1" aria-label="Yukarı" type="button">↑</button>
+        <button class="dir left" data-dx="-1" data-dy="0" aria-label="Sola" type="button">←</button>
+        <button class="dir down" data-dx="0" data-dy="1" aria-label="Aşağı" type="button">↓</button>
+        <button class="dir right" data-dx="1" data-dy="0" aria-label="Sağa" type="button">→</button>
+      </div><div class="micro">Yön tuşlarıyla yürü<br>Köprüyü telefonla aç</div></div>
+    <p class="footer">Bu oyun fiziksel katlanma durumunu Safari'nin Device Posture API'sinden okur. Açı derecesi ölçmez. Geliştirici önizlemesidir.</p>
+  </main>
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-label="Bölüm tamamlandı"><div class="modal"><div class="medal">✨</div><h2 id="modalTitle">Harika!</h2><p id="modalMessage">Bölümü tamamladın.</p><button id="next" type="button">Sonraki bölüm →</button></div></div>
+  <script>
+    (() => {
+      'use strict';
+      const levels = [
+        {name:'İlk Geçit',start:[1,2],goal:[7,2],walls:[],desc:'<strong>Görev:</strong> Telefonu kitap gibi biraz katla. Ortadaki enerji köprüsü açılınca sağdaki mor hedefe ilerle.'},
+        {name:'Kayıp Anahtar',start:[1,3],goal:[7,2],key:[2,1],walls:[[6,3],[7,3]],desc:'<strong>Görev:</strong> Önce soldaki altın anahtarı al. Sonra telefonu katlayıp köprüden geçerek kilitli hedefe ulaş.'},
+        {name:'İki Hareket',start:[1,2],goal:[7,1],star:[6,3],goalOpen:true,walls:[[6,1]],desc:'<strong>Görev:</strong> Katlayarak karşıya geç, mavi kristali topla. Sonra telefonu tekrar tamamen açıp mor geçide ulaş.'}
+      ];
+      const $ = id => document.getElementById(id);
+      let stage=0,player=[...levels[0].start],steps=0,key=false,star=false,posture='unsupported',bridgeSide=3,finished=false;
+      function alertLine(msg){const el=$('bridgeNote');el.textContent=msg;el.className='bridgeNote '+(posture==='folded'?'on':posture==='unsupported'?'warn':'');}
+      function syncPosture(){
+        let next='unsupported';
+        try {if (navigator.devicePosture && (navigator.devicePosture.type==='folded'||navigator.devicePosture.type==='continuous')) next=navigator.devicePosture.type;}catch(err){}
+        const changed = next!==posture;posture=next;
+        $('status').className='status '+posture;
+        $('statusText').textContent=posture==='folded'?'KATLI · Köprü açık':posture==='continuous'?'DÜZ · Köprü kapalı':'API bulunamadı';
+        if (changed && posture!=='folded' && player[0]===4){player=[bridgeSide,2];alertLine('Köprü kapandı! Güvenli kıyıya döndün.');}
+        else if (posture==='unsupported') alertLine('Safari bu sayfada menteşe verisi sunmuyor. Sayfayı doğrudan Safari’de HTTPS üzerinden aç.');
+        else alertLine(posture==='folded'?'✦ Gerçek katlama algılandı: enerji köprüsü AÇIK!':'✧ Telefon düz: Köprü kapalı. Açmak için telefonu kısmen katla.');
+        draw();
+      }
+      function levelLoad(n){stage=n;const lv=levels[stage];player=[...lv.start];steps=0;key=false;star=false;finished=false;bridgeSide=3;$('overlay').classList.remove('open');$('levelLabel').innerHTML=`BÖLÜM ${stage+1} <span>${lv.name}</span>`;$('progress').textContent=`${stage+1}/${levels.length}`;$('instructions').innerHTML=lv.desc;updateCounters();syncPosture();}
+      function updateCounters(){$('moves').textContent=steps;}
+      function same(a,x,y){return a && a[0]===x && a[1]===y;}
+      function goalIsReady(lv){return (!lv.key||key)&&(!lv.star||star)&&(!lv.goalOpen||posture==='continuous');}
+      function draw(){
+        const lv=levels[stage],board=$('board'); if(!board)return;
+        const frag=document.createDocumentFragment();
+        for(let y=0;y<5;y++) for(let x=0;x<9;x++){
+          const cell=document.createElement('div');cell.className='tile '+(x<4?'left':x>4?'right':'rift');cell.dataset.x=x;cell.dataset.y=y;
+          if(x===4&&y===2&&posture==='folded')cell.classList.add('bridge');
+          if(lv.walls.some(v=>same(v,x,y)))cell.classList.add('wall');
+          if(same(lv.goal,x,y)){const el=document.createElement('span');el.className='symbol goal';el.textContent='✦';cell.classList.add(goalIsReady(lv)?'ready':'locked');cell.append(el);}
+          if(same(lv.key,x,y)&&!key){const el=document.createElement('span');el.className='symbol key';el.textContent='◆';cell.append(el);}
+          if(same(lv.star,x,y)&&!star){const el=document.createElement('span');el.className='symbol star';el.textContent='❖';cell.append(el);}
+          if(same(player,x,y)){const el=document.createElement('span');el.className='symbol player';el.setAttribute('aria-label','Lumo');cell.append(el);}
+          frag.append(cell);
+        }
+        board.replaceChildren(frag);
+      }
+      function move(dx,dy){
+        if(finished)return;
+        const lv=levels[stage],nx=player[0]+dx,ny=player[1]+dy;
+        if(nx<0||nx>8||ny<0||ny>4)return;
+        if(nx===4&&(ny!==2||posture!=='folded')){alertLine(posture==='folded'?'Yarıktan yalnızca ortadaki köprüyle geçebilirsin.':'Köprü kapalı! Telefonunu kısmen katla.');return;}
+        if(lv.walls.some(v=>same(v,nx,ny))){alertLine('Bu karede bir kaya var; başka bir yol dene.');return;}
+        if(same(lv.goal,nx,ny)&&!goalIsReady(lv)){
+          alertLine(lv.key&&!key?'Önce soldaki altın anahtarı bul.':lv.star&&!star?'Önce sağdaki kristali topla.':'Son kapı yalnızca telefonu DÜZ açınca etkinleşiyor.');return;
+        }
+        if(nx===4)bridgeSide=player[0]<4?3:5;
+        player=[nx,ny];steps++;
+        if(same(lv.key,nx,ny)&&!key){key=true;alertLine('◆ Anahtarı aldın! Şimdi mor hedefe ulaş.');}
+        else if(same(lv.star,nx,ny)&&!star){star=true;alertLine('❖ Kristali aldın! Telefonu düz açıp mor kapıya git.');}
+        else if(same(lv.goal,nx,ny)){finished=true;showWin();}
+        else if(posture==='folded'){alertLine('✦ Köprü AÇIK. İlerlemeye devam!');}
+        else if(posture==='continuous'){alertLine('✧ Köprü kapalı. Gerekirse telefonu katla.');}
+        updateCounters();draw();
+      }
+      function showWin(){
+        $('modalTitle').textContent=stage===2?'MIRROR tamamlandı!':'Bölüm geçildi!';
+        $('modalMessage').textContent=stage===2?`Üç bölümü de gerçek katlama hareketiyle tamamladın. Toplam ${steps} adımda son bölümü bitirdin!`:`${steps} adımda başardın. Sıradaki bölümde yeni bir bulmaca var.`;
+        $('next').textContent=stage===2?'Tekrar oyna ↻':'Sonraki bölüm →';
+        $('overlay').classList.add('open');
+      }
+      document.querySelectorAll('.dir').forEach(b=>b.addEventListener('click',()=>move(Number(b.dataset.dx),Number(b.dataset.dy))));
+      $('reset').addEventListener('click',()=>levelLoad(stage));
+      $('next').addEventListener('click',()=>levelLoad((stage+1)%levels.length));
+      document.addEventListener('keydown',ev=>{const dirs={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]};if(dirs[ev.key]){ev.preventDefault();move(...dirs[ev.key]);}});
+      $('board').addEventListener('click',ev=>{const c=ev.target.closest('.tile');if(!c)return;const dx=Number(c.dataset.x)-player[0],dy=Number(c.dataset.y)-player[1];if(Math.abs(dx)+Math.abs(dy)===1)move(dx,dy);});
+      let touch=null;const board=$('board');board.addEventListener('touchstart',ev=>{const t=ev.changedTouches[0];touch={x:t.clientX,y:t.clientY};},{passive:true});board.addEventListener('touchend',ev=>{if(!touch)return;const t=ev.changedTouches[0],dx=t.clientX-touch.x,dy=t.clientY-touch.y;touch=null;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?1:-1,0);else move(0,dy>0?1:-1);},{passive:true});
+      if(navigator.devicePosture?.addEventListener)navigator.devicePosture.addEventListener('change',syncPosture);
+      window.addEventListener('pageshow',syncPosture);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncPosture();});
+      levelLoad(0);
+    })();
+  </script>
+</body>
+</html>
